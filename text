@@ -1,0 +1,718 @@
+<template>
+  <v-card width="100%">
+    <v-card-title class="headerPage">
+      <span class="titlePage">Consumer Details</span>
+
+      <v-card-text>
+        <div class="articles" id="articles">
+          <div class="container" v-if="consumer && address">
+            <div class="box">
+              <div v-if="consumer.img">
+                <img :src="consumer.img" :alt="`${consumer.name} image`" />
+              </div>
+              <div class="box" v-else>
+                <img
+                  src="https://st.depositphotos.com/1779253/5140/v/600/depositphotos_51405259-stock-illustration-male-avatar-profile-picture-use.jpg"
+                />
+              </div>
+
+              <v-rating
+                data-cy="cy_Consumers/53"
+                v-model="rating"
+                color="yellow darken-3"
+                background-color="yellow darken-3"
+                empty-icon="$ratingFull"
+                half-increments
+                hover
+              ></v-rating>
+
+              <Ellipses :consumer_id="consumer_id" :from="true" />
+              <!-- <v-btn
+                  class="fullProfile"
+                  text
+                  color="deep-purple accent-4"
+                  @click="
+                    $router.push({
+                      path: `/fullViewConsumer/${consumer.consumer_id}`,
+                    })
+                  "
+                >
+                  Get Full Profile
+                </v-btn> -->
+            </div>
+            <div class="box">
+              <div class="content">
+                <v-col>
+                  <strong class="size">
+                    <v-icon size="30" color="teal">{{
+                      consumer.gender == "male"
+                        ? "mdi-gender-male"
+                        : consumer.gender == "female"
+                        ? "mdi-gender-female"
+                        : ""
+                    }}</v-icon>
+                    {{ consumer.name }}</strong
+                  >
+                </v-col>
+
+                <v-col>
+                  <strong v-if="consumer.email" class="size">
+                    <v-icon size="30" color="teal">mdi-email</v-icon>
+                    {{ consumer.email }}</strong
+                  >
+                  <strong v-else class="size">
+                    <v-icon size="30" color="teal">mdi-email</v-icon>
+                    N/A</strong
+                  >
+                </v-col>
+
+                <v-col>
+                  <strong v-if="consumer.date_of_birth" class="size">
+                    <v-icon size="30" color="teal">mdi-cake-layered</v-icon>
+                    {{ getAge(consumer.date_of_birth) }} years Old
+                  </strong>
+                  <strong v-else class="size">
+                    <v-icon size="30" color="teal">mdi-cake-layered</v-icon>
+                    N/A
+                  </strong>
+                </v-col>
+              </div>
+            </div>
+            <div class="box">
+              <div class="content">
+                <v-col>
+                  <strong v-if="address.city" class="size">
+                    <v-icon size="30" color="teal">mdi-home</v-icon>
+                    {{ address.city }}, {{ address.area }}</strong
+                  >
+                  <strong v-else class="size">
+                    <v-icon size="30" color="teal">mdi-home</v-icon>
+                    N/A</strong
+                  >
+                </v-col>
+                <v-col>
+                  <strong v-if="consumer.mobile_number" class="size">
+                    <v-icon size="30" color="teal">mdi-cellphone</v-icon>
+                    {{ consumer.mobile_number }}
+                  </strong>
+                  <strong v-else class="size">
+                    <v-icon size="30" color="teal">mdi-cellphone</v-icon>
+                    N/A
+                  </strong>
+                </v-col>
+                <v-col>
+                  <strong
+                    v-if="consumer.alternative_mobile_number"
+                    class="size"
+                  >
+                    <v-icon size="30" color="teal">mdi-cellphone</v-icon>
+                    {{
+                      `Alternative Number ${consumer.alternative_mobile_number} `
+                    }}
+                  </strong>
+                  <strong v-else class="size">
+                    <v-icon size="30" color="teal">mdi-cellphone</v-icon>
+                    N/A
+                  </strong>
+                </v-col>
+                <!-- <v-col>
+                    <strong class="size"
+                      >{{ getAge(consumer.date_of_birth) }} years Old</strong
+                    >
+                  </v-col> -->
+              </div>
+            </div>
+            <div class="box">
+              <div class="content">
+                <div class="Main-box">
+                  <div class="box">
+                    <p>Total Spent</p>
+                    <span>{{ paid + unPaid }}</span>
+                  </div>
+                  <div class="box">
+                    <p>Unpaid Amount</p>
+
+                    <span> {{ unPaid }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <hr />
+          <!---- Start Table -->
+          <div>
+            <h3>
+              Appointments
+              <button class="button button5">
+                {{ totalAppointments }}
+              </button>
+            </h3>
+
+            <table v-if="Next.length || last.length">
+              <tr>
+                <th>#</th>
+                <th>Appointments Type</th>
+                <th>Appointments Setting</th>
+                <th>Priorty</th>
+                <th>Service Provider</th>
+                <th>Services</th>
+              </tr>
+              <tr v-if="Next.length">
+                <td>Next Appointments</td>
+                <td>{{ Next[0].Appointments_Type }}</td>
+                <td>{{ Next[0].Appointments_Setting }}</td>
+                <td>{{ Next[0].Priorty }}</td>
+                <td>{{ Next[0].Proivder_Name }}</td>
+                <td v-if="Next[0].services.length == '1'">
+                  {{ Next[0].services[0].Services_name }}
+                </td>
+                <td v-else>
+                  <v-tooltip bottom color="success">
+                    <template v-slot:activator="{ on, attrs }">
+                      <span v-bind="attrs" v-on="on">
+                        {{ Next[0].services[0].Services_name }} and
+                        {{ Next[0].services.length - 1 }} other Services
+                      </span>
+                    </template>
+                    <div
+                      v-for="(service, index) in Next[0].services"
+                      :key="service.id"
+                    >
+                      <span v-if="index != '0'">{{
+                        service.Services_name
+                      }}</span>
+                    </div>
+                  </v-tooltip>
+                </td>
+
+                <!-- <td v-for="service in Next[0].services" :key="service.id">
+                    {{ service.Services_name }}
+                  </td> -->
+              </tr>
+              <tr v-else>
+                <td>Next Appointments</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr v-if="last.length">
+                <td>Last Appointments</td>
+                <td>{{ last[0].Appointments_Type }}</td>
+                <td>{{ last[0].Appointments_Setting }}</td>
+                <td>{{ last[0].Priorty }}</td>
+                <td>{{ last[0].Proivder_Name }}</td>
+                <td v-if="last[0].services.length == '1'">
+                  {{ last[0].services[0].Services_name }}
+                </td>
+                <td v-else>
+                  <v-tooltip bottom color="success">
+                    <template v-slot:activator="{ on, attrs }">
+                      <span v-bind="attrs" v-on="on">
+                        {{ last[0].services[0].Services_name }} and
+                        {{ last[0].services.length - 1 }} other Services
+                      </span>
+                    </template>
+                    <div
+                      v-for="(service, index) in last[0].services"
+                      :key="service.id"
+                    >
+                      <span v-if="index != '0'">{{
+                        service.Services_name
+                      }}</span>
+                    </div>
+                  </v-tooltip>
+                </td>
+              </tr>
+              <tr v-else>
+                <td>Last Appointments</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <!---- End Table -->
+        <hr />
+        <div class="otherSection">
+          <div class="detalis">
+            <div class="center" style="margin-left: 130px">
+              <h3>Balcklisted by</h3>
+              <div v-if="blackList.length">
+                <div
+                  class="box-felx"
+                  v-for="(item, index) in blackList"
+                  :key="index"
+                >
+                  <div class="child">
+                    <img
+                      class="image"
+                      src="https://www.shareicon.net/data/512x512/2016/08/18/813844_people_512x512.png"
+                    />
+                    <div class="parent">
+                      <div class="Doctocr">Dr. {{ item.name }}</div>
+                      <!-- <div class="reason">{{ item.reason }}</div> -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="consumer" class="NoBlackList">
+                {{ consumer.name }} is not Black List at all
+              </div>
+            </div>
+            <div class="center">
+              <h3>Emergency Contact</h3>
+              <div v-if="this.emergencyContact.length">
+                <div
+                  class="box-felx"
+                  v-for="(item, index) in this.emergencyContact"
+                  :key="index"
+                >
+                  <div class="child">
+                    <!-- <img class="image" :src="item.image" /> -->
+                    <div class="parent">
+                      <div class="Doctocr">{{ item.name }}</div>
+                      <div class="reason">{{ item.relative }}</div>
+                      <div class="reason">{{ item.phone_number }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else-if="consumer" class="NoBlackList">
+                {{ consumer.name }} does not have Emergency Contact
+              </div>
+            </div>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card-title>
+    <v-card-text> </v-card-text>
+  </v-card>
+</template>
+<script>
+// import { requestRebuilder } from "../../../web.consumers.agentsoncloud.com/plugins/api_gatway";
+import Ellipses from "../../../web.consumers.agentsoncloud.com/components/allConsumers/Ellipses.vue";
+export default {
+  props: {
+    consumer_id: String,
+    consumerDialodFlag: Boolean,
+  },
+  components: {
+    Ellipses,
+  },
+  data() {
+    return {
+      Next: [],
+      last: [],
+      totalAppointments: 0,
+      paid: null,
+      unPaid: null,
+      blackList: [],
+      consumer: null,
+      referredName: null,
+      referred_type: null,
+      emergencyContact: [],
+      address: null,
+      headers: [
+        { text: "Cateqory", value: "categoryservice" },
+        { text: "Service", value: "services" },
+        { text: "Service Provider", value: "doctorname" },
+      ],
+      desserts: [],
+      rating: 3,
+    };
+  },
+
+  methods: {
+    close() {
+      this.blackList = [];
+      this.emergencyContact = [];
+      this.$emit("close");
+    },
+    getAge(dateString) {
+      var today = new Date();
+      var birthDate = new Date(dateString);
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age == 0) {
+        age++;
+      }
+
+      return age;
+    },
+    // async gitConsumer() {
+    //   let result = await this.$axios(
+    //     requestRebuilder("consumers", "/consumers/:consumer_id", "get", {
+    //       consumer_id: this.consumer_id,
+    //     })
+    //   );
+    //   this.consumer = result.data.consumer;
+    //   let UnpaidAmount = await this.$axios(
+    //     requestRebuilder(
+    //       "billing",
+    //       "/AppointmentsRevenue/Consumer/UnpaidAmount/:id",
+    //       "post",
+    //       {
+    //         id: this.consumer_id,
+    //       }
+    //     )
+    //   );
+    //   console.log("Hello Unpaid", UnpaidAmount.data.Response);
+
+    //   let paidAmount = await this.$axios(
+    //     requestRebuilder(
+    //       "billing",
+    //       "/AppointmentsRevenue/Consumer/PaidAmount/:id",
+    //       "post",
+    //       {
+    //         id: this.consumer_id,
+    //       }
+    //     )
+    //   );
+
+    //   this.paid = paidAmount.data.Response;
+    //   this.unPaid = UnpaidAmount.data.Response;
+
+    //   // let configupaid = {
+    //   //   method: "post",
+    //   //   url: "/api-gateway/",
+    //   //   headers: {
+    //   //     "requsted-service": "billing",
+    //   //     "requsted-path": "/AppointmentsRevenue/Consumer/UnpaidAmount/:id",
+    //   //     "requsted-method": "post",
+    //   //   },
+    //   //   data: {
+    //   //     id: this.consumer_id,
+    //   //   },
+    //   // };
+    //   // let configpaid = {
+    //   //   method: "post",
+    //   //   url: "/api-gateway/",
+    //   //   headers: {
+    //   //     "requsted-service": "billing",
+    //   //     "requsted-path": "/AppointmentsRevenue/Consumer/UnpaidAmount/:id",
+    //   //     "requsted-method": "post",
+    //   //   },
+    //   //   data: {
+    //   //     id: this.consumer_id,
+    //   //   },
+    //   // };
+    //   // this.unPaid = await this.$axios(configupaid);
+    //   // this.unPaid = this.unPaid.data.Response;
+    //   // let response = await this.$axios(configpaid);
+    //   // this.paid = response.data.Response;
+
+    //   // await this.$store.dispatch("getServiceProviders");
+
+    //   console.log("this.consumer", this.consumer);
+
+    //   await this.$store.dispatch(
+    //     "getServiceProvidersForSelect",
+    //     this.consumer_id
+    //   );
+
+    //   this.blackList = await this.$store.getters.unSelectProviders;
+    // },
+    // async gitEmergencyContact() {
+    //   let responseForEmergencyContact = await this.$axios(
+    //     requestRebuilder(
+    //       "consumers",
+    //       "/consumers/emergencyContact/:consumer_id	",
+    //       "get",
+    //       {
+    //         consumer_id: this.consumer_id,
+    //       }
+    //     )
+    //   );
+    //   this.emergencyContact = responseForEmergencyContact.data.emergencyContact;
+    //   console.log("api", this.emergencyContact);
+    // },
+    // async gitAddressForConsumer() {
+    //   let responseForAddress = await this.$axios(
+    //     requestRebuilder(
+    //       "consumers",
+    //       "/consumers/address/:consumer_id",
+    //       "get",
+    //       {
+    //         consumer_id: this.consumer_id,
+    //       }
+    //     )
+    //   );
+    //   this.address = responseForAddress.data.address;
+    // },
+    // async gitLastFuveAppointment() {
+    //   // var config = {
+    //   //   method: "post",
+    //   //   url: "/api-gateway/",
+    //   //   headers: {
+    //   //     "requsted-service": "appointments",
+    //   //     "requsted-path": "/appointments/Consumer/:Consumer",
+    //   //     "requsted-method": "get",
+    //   //   },
+    //   //   data: {
+    //   //     Consumer: this.consumer_id,
+    //   //   },
+    //   // };
+    //   let response = await this.$axios(
+    //     requestRebuilder(
+    //       "appointments",
+    //       "/appointments/Consumer/:Consumer",
+    //       "get",
+    //       {
+    //         Consumer: this.consumer_id,
+    //       }
+    //     )
+    //   );
+
+    //   this.desserts = response.data.Response;
+    //   if (response.data.Response.length) {
+    //     let nextDate = null;
+    //     let nextAppt = null;
+    //     let lastDate = null;
+    //     let lastAppt = null;
+    //     response.data.Response.forEach((appt) => {
+    //       // console.log("appt =>", appt);
+    //       let dateNow = new Date(
+    //         Date.now() - new Date().getTimezoneOffset() * 60000
+    //       )
+    //         .toISOString()
+    //         .substr(0, 10);
+    //       console.log(
+    //         "ss",
+    //         appt.Date <= dateNow &&
+    //           (appt.Status == "Ended" ||
+    //             appt.Status == "Checked-out" ||
+    //             appt.Status == "Completed")
+    //       );
+    //       // console.log("odai", appt.Date <= dateNow && appt.Status == "Ended");
+
+    //       if (
+    //         appt.Date >= dateNow &&
+    //         !(
+    //           appt.Status == "Ended" ||
+    //           appt.Status == "Checked-out" ||
+    //           appt.Status == "Completed"
+    //         )
+    //       ) {
+    //         if (!nextAppt) {
+    //           nextAppt = appt;
+    //           nextDate = appt.Date;
+    //         } else if (appt.Date < nextDate) {
+    //           nextAppt = appt;
+    //           nextDate = appt.Date;
+    //         }
+    //       }
+    //       if (
+    //         appt.Date <= dateNow &&
+    //         (appt.Status == "Ended" ||
+    //           appt.Status == "Checked-out" ||
+    //           appt.Status == "Completed")
+    //       ) {
+    //         if (!lastAppt) {
+    //           console.log("dd");
+    //           lastAppt = appt;
+    //           lastDate = appt.Date;
+    //         } else if (appt.Date < lastDate) {
+    //           lastAppt = appt;
+    //           lastDate = appt.Date;
+    //         }
+    //       }
+    //     });
+
+    //     nextAppt ? this.Next.push(nextAppt) : "";
+    //     lastAppt ? this.last.push(lastAppt) : "";
+    //   }
+    //   if (response.data.Response) {
+    //     this.totalAppointments = response.data.Response.length;
+    //   }
+    // },
+  },
+  async created() {
+    // await Promise.all([
+    //   this.gitConsumer(),
+    //   this.gitEmergencyContact(),
+    //   this.gitAddressForConsumer(),
+    //   this.gitLastFuveAppointment(),
+    // ]);
+  },
+};
+</script>
+<style scoped>
+.headerPage {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.headerPage .icon {
+  background-color: red;
+  color: #fff;
+  font-size: 25px;
+  cursor: pointer;
+}
+.titlePage {
+  margin-bottom: 15px;
+  color: #009688 !important;
+  border-bottom: 3px solid #009688;
+}
+
+.Main-box .box:first-child {
+  background-color: #d8f0e7;
+  color: #009688;
+  text-align: center;
+  margin: 10px 0px;
+}
+.Main-box .box:last-child {
+  background-color: #f0d3e4;
+  color: #dc3545;
+  text-align: center;
+}
+.img-detalis img {
+  width: 200px;
+  height: 150px;
+}
+/** Start */
+.articles {
+  padding-top: var(--main-padding-top);
+  padding-bottom: var(--main-padding-bottom);
+  position: relative;
+}
+.articles .container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 30px;
+  /* align-items: center; */
+}
+.articles .box {
+  background-color: white;
+  /* border-radius: 6px; */
+  overflow: hidden;
+}
+.articles .box img {
+  width: 100%;
+  max-width: 100%;
+}
+.articles .box .content {
+  /* padding: 1px; */
+}
+.articles .box .content p {
+  margin: 10px 0 0;
+  line-height: 1.5;
+  color: #777;
+}
+.otherSection {
+  margin: 10px 0 0;
+}
+/* .otherSection .box-felx{
+  background-color: gray;
+} */
+h3 {
+  color: #009688;
+  font-size: 20px;
+  margin: 25px 0px;
+}
+.otherSection .detalis {
+  display: flex;
+  justify-content: space-between;
+  /* align-items: center;    */
+}
+.otherSection .child {
+  display: flex;
+  background-color: #d2e2e1;
+  padding: 10px;
+  align-items: center;
+  border-radius: 8px;
+  margin-top: 5px;
+  width: 300px;
+  font-weight: bold;
+}
+.otherSection .child .Doctocr,
+p {
+  /* margin: 10px 0px; */
+  color: #003a5d;
+}
+.otherSection .child img {
+  border-radius: 50%;
+  width: 40px;
+  margin-right: 15px;
+}
+
+.parent {
+  display: flex;
+  align-items: center;
+  flex: 3;
+}
+.Doctocr {
+  flex: 1.5;
+}
+.reason {
+  flex: 1.5;
+  justify-content: flex-end;
+  display: flex;
+}
+.age {
+  margin-left: 50px;
+}
+.button {
+  background-color: #009688;
+  border: none;
+  color: white;
+  text-align: center;
+  padding: 5px;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+}
+.button5 {
+  border-radius: 50%;
+}
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+td {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+  font-size: 13px !important;
+  text-align: center;
+}
+th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  background-color: #009688;
+  color: #fff !important;
+  text-align: center;
+}
+tr:hover {
+  background-color: #d2e2e1;
+}
+.fullProfile {
+  text-transform: capitalize !important;
+}
+.NoBlackList {
+  padding: 16px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #d2e2e1 0% 0% no-repeat padding-box;
+  opacity: 1;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+</style>
